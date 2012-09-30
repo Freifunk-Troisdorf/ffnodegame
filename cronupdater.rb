@@ -11,9 +11,9 @@ while !result
     result = Scores.update
   rescue
     result = false
+    failed += 1
   end
   if !result && failed < 10
-    failed += 1
     log 'Failed loading node data! Retrying in 60 seconds...'
     sleep 60
   end
