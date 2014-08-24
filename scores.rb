@@ -17,13 +17,6 @@ class Scores
 
   @@scorepath = 'public/scores.json'
 
-  #load apple MAC adresses once
-  if PUNISHAPPLE
-    #NOTE: update the applemacs.txt file with:
-    #./queryvendormac.sh apple > applemacs.txt
-    @@apples = File.readlines('applemacs.txt').map{|l| l.chomp.strip.downcase}
-  end
-
   #--------
 
   #return last update time -> last modification to file
@@ -40,9 +33,7 @@ class Scores
     #sum up requested day scores
     scores.each{|e| e['points'] = e['points'][offset,days].to_a.inject(&:+).to_i}
 
-    #return without nameless routers, blacklisted and losers
-    scores.delete_if{|e| BLACKLIST.index e['name']}
-    scores.delete_if{|e| e['name'].empty?}
+    #return without losers
     scores.delete_if{|e| e['points']<=0}
 
     #sort by score
@@ -96,11 +87,6 @@ class Scores
       e['points'].pop if e['points'].length > 30
     end
   end
-  #
-  #decide by MAC address
-  def self.is_apple?(node)
-    return @@apples.index{|a| a==node['id'][0..7]}
-  end
 
   #clean and prepare node data
   def self.transform(nodejson)
@@ -110,8 +96,10 @@ class Scores
     nodes.each do |n|
       n['meshs']=[]
       n['vpns']=[]
-      n['clients']=0
-      n['apples']=0
+      n['clients']=n['clientcount']
+      n.delete 'clientcount' #copied to clients
+      n.delete 'geo'  #not interesting
+      n.delete 'id' #not interesting
     end
 
     links.each do |l|
@@ -127,39 +115,21 @@ class Scores
         quality=l['quality'].split(", ").map(&:to_f)
         nodes[src]['vpns'] << quality[0]
         nodes[dst]['vpns'] << quality[1] if quality.size>1
-      elsif t=='client'
-        nodes[src]['clients'] += 1
-        nodes[dst]['clients'] += 1
-
-        if PUNISHAPPLE
-          if is_apple?(nodes[src]) || is_apple?(nodes[dst])
-            nodes[src]['apples'] += 1
-            nodes[dst]['apples'] += 1
-          end
-        end
       end
     end
 
-    #remove clients
-    routers = nodes.select{|n| n['flags']['client'] == false}
+    #now can delete nodes (before order mattered)
+    nodes.delete_if{|n| n['name'].empty?}
+    nodes.delete_if{|n| BLACKLIST.index n['name']}
 
-    #remove unneccesary stuff from router score json
-    routers.each do |r|
-      r['flags'].delete 'client' #no clients in array anyway
-      r['flags'].delete 'vpn' #not used
-      r.delete 'geo'  #not interesting
-      r.delete 'macs' #not interesting
-      r.delete 'id' #not interesting
-    end
-
-    return routers
+    return nodes
   end
 
   #calculate and add points for node in current round and set info for html
   def self.calc_points(node)
     #reset current status data
     node['sc_offline'] = node['sc_gateway'] = node['sc_clients'] = 0
-    node['sc_apples'] = node['sc_vpns'] = node['sc_meshs'] = 0
+    node['sc_vpns'] = node['sc_meshs'] = 0
     node['points'] = [0] if node['points'].nil?
     p = node['points']
 
@@ -171,7 +141,6 @@ class Scores
     p[0] += ( node['sc_gateway'] = SC_GATEWAY ) if node['flags']['gateway']
 
     p[0] += ( node['sc_clients'] = SC_PERCLIENT * node['clients'] )
-    p[0] += ( node['sc_apples'] = SC_PERAPPLE * node['apples'] ) if PUNISHAPPLE
 
     p[0] += ( node['sc_vpns'] = node['vpns'].map{|e| SC_PERVPN / e}.inject(&:+).to_i )
     p[0] += ( node['sc_meshs'] = node['meshs'].map{|e| SC_PERMESH / e}.inject(&:+).to_i )
@@ -191,12 +160,17 @@ class Scores
       s['vpns'] = []
       s['meshs'] = []
       s['clients'] = 0
-      s['apples'] = 0
       calc_points s
     end
 
+    #To prevent multiple nodes with same name mixed up take only first
+    seen = Hash.new false
+
     #perform regular update
     data.each do |n|
+      next if seen[n['name']]
+      seen[n['name']] = true
+
       i = scores.index{|s| s['name'] == n['name'] }
       if i.nil? #new entry
         scores.push n

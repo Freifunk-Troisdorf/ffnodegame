@@ -4,8 +4,6 @@
 #Copyright (C) 2012 Anton Pirogov
 #Licensed under The GPLv3
 
-#TODO: rewrite using ffmaplib
-
 require 'json'
 require 'sinatra'
 
