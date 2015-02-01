@@ -10,7 +10,7 @@ require './settings'
 
 #write line to log if log enabled
 def log(txt)
-  `echo "#{Time.now.to_s}: #{txt}" >> log.txt` if LOG
+  `echo "#{Time.now.to_s}: #{txt}" >> #{LOG_FILE}` if LOG
 end
 
 class Scores

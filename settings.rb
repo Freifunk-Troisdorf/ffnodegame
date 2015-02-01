@@ -8,6 +8,9 @@
 #Settings
 #--------
 
+TITLE = "Freifunk Lübeck Node Highscores"
+GRAPHLINK='http://burgtor.ffhl/mesh/nodes.html'
+
 #source path of node data
 JSONSRC='/home/zenforyen/public_html/nodes.json'
 
@@ -30,3 +33,4 @@ BLACKLIST=['burgtor','holstentor','muehlentor','huextertor']
 
 #enable logging
 LOG=true
+LOG_FILE='log.txt'
