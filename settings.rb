@@ -8,14 +8,14 @@
 #Settings
 #--------
 
-TITLE = "Freifunk Lübeck Node Highscores"
-GRAPHLINK='http://burgtor.ffhl/mesh/nodes.html'
+TITLE = "Freifunk Troisdorf Node Highscores"
+GRAPHLINK='http://map.freifunk-troisdorf.de'
 
 #source path of node data
-JSONSRC='/home/zenforyen/public_html/nodes.json'
+JSONSRC='/srv/ffmap-d3/build/nodes.json'
 
 #password for commands over GET requests
-PWD='hackme'
+PWD='LVcVz6uV6WsyEnJLBF0MLUfwW'
 
 #score values
 SC_OFFLINE=-100
@@ -27,7 +27,7 @@ SC_PERMESH=50 #divided by quality
 #----
 
 #hide following nodes from scores
-BLACKLIST=['burgtor','holstentor','muehlentor','huextertor']
+BLACKLIST=['SRV:wupper0','SRV:wupper1','SRV:map','SRV:dns','gateway1','SRV:update1']
 
 #----
 
